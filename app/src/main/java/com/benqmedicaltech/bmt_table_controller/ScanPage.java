@@ -82,6 +82,8 @@ public class ScanPage extends AppCompatActivity {
         return mContext;
     }
 
+
+    public String M_T = "";
     @Override
     public void onLowMemory() {
         super.onLowMemory();
@@ -97,6 +99,22 @@ public class ScanPage extends AppCompatActivity {
         TextView tex = (TextView) findViewById(R.id.textView234);
         Button nextPageBtn = (Button) findViewById(R.id.button234);
         ListView listview = (ListView) findViewById(R.id.listView234);
+
+
+
+        nextPageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                TextView tex2 = (TextView) findViewById(R.id.textView234);
+                //Intent intent = new Intent();
+                //intent.setClass(ScanPage.this , ScanPage.class);
+                //startActivity(intent);
+                tex2.setText(M_T);
+                M_T = "";
+                sendMessage();
+            }
+        });
 
         tex.setText("Bluetooth scan start");
 
@@ -215,8 +233,8 @@ public class ScanPage extends AppCompatActivity {
     private String[] from = {"name","addr","type"};
     //private int[] to = {R.id.item_name,R.id.item_addr,R.id.item_type};
     private LinkedList<HashMap<String,Object>> data;
-    private MyBTReceiver receiver;
-    private AcceptThread serverThread;
+    //private MyBTReceiver receiver;
+    //private AcceptThread serverThread;
 
     private static final String TAG = "ScanPageActivity";
     //private final String MY_UUID = "00001101-0000-1000-8000-00805F9B34FB";
@@ -286,137 +304,140 @@ public class ScanPage extends AppCompatActivity {
         // Don't forget to unregister the ACTION_FOUND receiver.
         unregisterReceiver(mReceiver);
     }
-    private class MyBTReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-            if (!isBTNameExists(device.getName())) {
-                HashMap<String, Object> item = new HashMap<>();
-                item.put(from[0], device.getName());
-                item.put(from[1], device.getAddress());
-                item.put(from[2], "scan");
-                item.put("device",device);
-                data.add(item);
-                adapter.notifyDataSetChanged();
-            }
-        }
-    }
-    private boolean isBTNameExists (String name) {
-        boolean isExists = false;
-        for (HashMap<String,Object> devices : data) {
-            if ( ((String)devices.get(from[1]) ).equals(name)) {
-                isExists = true;
-                break;
-            }
-        }
-        return isExists;
-    }
 
-    private class AcceptThread extends Thread {
-        private final BluetoothServerSocket mmServerSocket;
 
-        public AcceptThread() {
-            // Use a temporary object that is later assigned to mmServerSocket,
-            // because mmServerSocket is final
-            BluetoothServerSocket tmp = null;
-            try {
-                // MY_UUID is the app's UUID string, also used by the client code
-                tmp = mBluetoothAdapter.listenUsingRfcommWithServiceRecord("Hotlife_Mick_115200", MY_UUID);
-            } catch (IOException e) { }
-            mmServerSocket = tmp;
-        }
-
-        public void run() {
-            BluetoothSocket socket = null;
-            // Keep listening until exception occurs or a socket is returned
-            while (true) {
-                try {
-                    socket = mmServerSocket.accept();
-                    Log.d("Hotlife_Mick_115200","Connecting as a server  Success");
-                    InputStream in = socket.getInputStream();
-                    byte[] buf = new byte[1024];
-                    int len = in.read(buf);
-                    Log.d("Abner",new String(buf,0,len));
-                    in.close();
-                } catch (IOException e) {
-                    //break;
-                }
-                // If a connection was accepted
-//                if (socket != null) {
-//                    // Do work to manage the connection (in a separate thread)
-//                    manageConnectedSocket(socket);
-//                    mmServerSocket.close();
-//                    break;
+//    private class MyBTReceiver extends BroadcastReceiver {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+//            if (!isBTNameExists(device.getName())) {
+//                HashMap<String, Object> item = new HashMap<>();
+//                item.put(from[0], device.getName());
+//                item.put(from[1], device.getAddress());
+//                item.put(from[2], "scan");
+//                item.put("device",device);
+//                data.add(item);
+//                adapter.notifyDataSetChanged();
+//            }
+//        }
+//    }
+//    private boolean isBTNameExists (String name) {
+//        boolean isExists = false;
+//        for (HashMap<String,Object> devices : data) {
+//            if ( ((String)devices.get(from[1]) ).equals(name)) {
+//                isExists = true;
+//                break;
+//            }
+//        }
+//        return isExists;
+//    }
+//
+//    private class AcceptThread extends Thread {
+//        private final BluetoothServerSocket mmServerSocket;
+//
+//        public AcceptThread() {
+//            // Use a temporary object that is later assigned to mmServerSocket,
+//            // because mmServerSocket is final
+//            BluetoothServerSocket tmp = null;
+//            try {
+//                // MY_UUID is the app's UUID string, also used by the client code
+//                tmp = mBluetoothAdapter.listenUsingRfcommWithServiceRecord("Hotlife_Mick_115200", MY_UUID);
+//            } catch (IOException e) { }
+//            mmServerSocket = tmp;
+//        }
+//
+//        public void run() {
+//            BluetoothSocket socket = null;
+//            // Keep listening until exception occurs or a socket is returned
+//            while (true) {
+//                try {
+//                    socket = mmServerSocket.accept();
+//                    Log.d("Hotlife_Mick_115200","Connecting as a server  Success");
+//                    InputStream in = socket.getInputStream();
+//                    byte[] buf = new byte[1024];
+//                    int len = in.read(buf);
+//                    Log.d("Abner",new String(buf,0,len));
+//                    in.close();
+//                } catch (IOException e) {
+//                    //break;
 //                }
-            }
-        }
-
-        // Will cancel the listening socket, and cause the thread to finish //
-        public void cancel() {
-            try {
-                mmServerSocket.close();
-            } catch (IOException e) { }
-        }
-    }
-
-    private class ConnectThread extends Thread {
-        private final BluetoothSocket mmSocket;
-        private final BluetoothDevice mmDevice;
-
-        public ConnectThread(BluetoothDevice device) {
-            // Use a temporary object that is later assigned to mmSocket,
-            // because mmSocket is final
-            BluetoothSocket tmp = null;
-            mmDevice = device;
-
-            // Get a BluetoothSocket to connect with the given BluetoothDevice
-            try {
-                // MY_UUID is the app's UUID string, also used by the server code
-                tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
-            } catch (IOException e) { }
-            mmSocket = tmp;
-        }
-
-        public void run() {
-            // Cancel discovery because it will slow down the connection
-            mBluetoothAdapter.cancelDiscovery();
-
-            try {
-                // Connect the device through the socket. This will block
-                // until it succeeds or throws an exception
-                mmSocket.connect();
-                Log.d("Hotlife_Mick_115200","Connecting as a client  Success");
-                OutputStream out = mmSocket.getOutputStream();
-                out.flush();
-                out.close();
-            } catch (IOException connectException) {
-                // Unable to connect; close the socket and get out
-                try {
-                    mmSocket.close();
-                } catch (IOException closeException) { }
-                return;
-            }
-
-            // Do work to manage the connection (in a separate thread)
-            //manageConnectedSocket(mmSocket);
-        }
-
-        /** Will cancel an in-progress connection, and close the socket */
-        public void cancel() {
-            try {
-                mmSocket.close();
-            } catch (IOException e) { }
-        }
-
-
-
-    }
+//                // If a connection was accepted
+////                if (socket != null) {
+////                    // Do work to manage the connection (in a separate thread)
+////                    manageConnectedSocket(socket);
+////                    mmServerSocket.close();
+////                    break;
+////                }
+//            }
+//        }
+//
+//        // Will cancel the listening socket, and cause the thread to finish //
+//        public void cancel() {
+//            try {
+//                mmServerSocket.close();
+//            } catch (IOException e) { }
+//        }
+//    }
+//
+//    private class ConnectThread extends Thread {
+//        private final BluetoothSocket mmSocket;
+//        private final BluetoothDevice mmDevice;
+//
+//        public ConnectThread(BluetoothDevice device) {
+//            // Use a temporary object that is later assigned to mmSocket,
+//            // because mmSocket is final
+//            BluetoothSocket tmp = null;
+//            mmDevice = device;
+//
+//            // Get a BluetoothSocket to connect with the given BluetoothDevice
+//            try {
+//                // MY_UUID is the app's UUID string, also used by the server code
+//                tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
+//            } catch (IOException e) { }
+//            mmSocket = tmp;
+//        }
+//
+//        public void run() {
+//            // Cancel discovery because it will slow down the connection
+//            mBluetoothAdapter.cancelDiscovery();
+//
+//            try {
+//                // Connect the device through the socket. This will block
+//                // until it succeeds or throws an exception
+//                mmSocket.connect();
+//                Log.d("Hotlife_Mick_115200","Connecting as a client  Success");
+//                OutputStream out = mmSocket.getOutputStream();
+//                out.flush();
+//                out.close();
+//            } catch (IOException connectException) {
+//                // Unable to connect; close the socket and get out
+//                try {
+//                    mmSocket.close();
+//                } catch (IOException closeException) { }
+//                return;
+//            }
+//
+//            // Do work to manage the connection (in a separate thread)
+//            //manageConnectedSocket(mmSocket);
+//        }
+//
+//        /** Will cancel an in-progress connection, and close the socket */
+//        public void cancel() {
+//            try {
+//                mmSocket.close();
+//            } catch (IOException e) { }
+//        }
+//
+//
+//
+//    }
 
     /**
      * 读取数据
      */
     private class readThread extends Thread {
         public void run() {
+            //TextView mytextviewX = (TextView) findViewById(R.id.textView234);
             byte[] buffer = new byte[1024];
             int bytes;
             InputStream is = null;
@@ -427,13 +448,14 @@ public class ScanPage extends AppCompatActivity {
                 e1.printStackTrace();
             }
             while (true) {
-                try {
+                try{
                     if ((bytes = is.read(buffer)) > 0) {
                         byte[] buf_data = new byte[bytes];
                         for (int i = 0; i < bytes; i++) {
                             buf_data[i] = buffer[i];
                         }
-                        String s = new String(buf_data);
+                        M_T = M_T + new String(buf_data);
+                        //mytextviewX.setText(s.toString());
                         //show("客户端:读取数据了" + s);
                     }
                 } catch (IOException e) {
@@ -444,7 +466,25 @@ public class ScanPage extends AppCompatActivity {
                     }
                     break;
                 }
-            }
+           }
+        }
+    }
+
+    /**
+     * 发送数据
+     */
+    public void sendMessage() {
+        if (BTSocket == null) {
+            Toast.makeText(this, "没有连接", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            OutputStream os = BTSocket.getOutputStream();
+            os.write("Mick_Test".getBytes());
+            os.flush();
+            //show("客户端:发送信息成功");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
